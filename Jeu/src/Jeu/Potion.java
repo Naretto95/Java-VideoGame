@@ -17,4 +17,8 @@ public class Potion extends Item {
 		Effet = effet;
 	}
 	
+	public String toString() {
+		return "Effet:"+this.getEffet()+" Niveau:"+this.getNiveau();
+	}
+	
 }

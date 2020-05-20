@@ -3,7 +3,12 @@ package Jeu;
 public class Ressource extends Objet {
 	
 	private TypeRessource Type;
-
+	
+	public Ressource(TypeRessource _Type) {
+		this.setRamassé(true);
+		this.setType(_Type);
+	}
+	
 	public TypeRessource getType() {
 		return Type;
 	}

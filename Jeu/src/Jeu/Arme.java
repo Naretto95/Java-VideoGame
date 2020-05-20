@@ -6,7 +6,6 @@ public class Arme extends Item {
 	private TypeArme Type;
 	private int Degats;
 	private int Portée;
-	private int Amélioré;
 	
 	public Arme(TypeArme _Type, int _Niveau ){
 		super(true,_Niveau,false);
@@ -15,7 +14,6 @@ public class Arme extends Item {
 			this.setDegats(_Niveau * 5);
 			this.setDurabilité(20);
 			this.setType(_Type);
-			this.setAmélioré(0);
 			this.setPortée(2);
 			break;
 			
@@ -23,24 +21,21 @@ public class Arme extends Item {
 			this.setDegats(_Niveau * 3);
 			this.setDurabilité(10);
 			this.setType(_Type);
-			this.setAmélioré(0);
 			this.setPortée(1);
 			break;
 		
 		case Arc:
 			this.setDegats(_Niveau * 2);
-			this.setDurabilité(15);
+			this.setDurabilité(3);
 			this.setType(_Type);
-			this.setAmélioré(0);
 			this.setPortée(10);
 			break;
 		
 		case Main:
 			this.setRamassé(true);
-			this.setDegats(_Niveau * 1);
+			this.setDegats(_Niveau*1);
 			this.setDurabilité(9999999);
 			this.setType(_Type);
-			this.setAmélioré(0);
 			this.setPortée(1);
 			break;
 			
@@ -50,10 +45,45 @@ public class Arme extends Item {
 		
 	}
 	
-	public void Ameliorer() {
-		if (this.getAmélioré()<5) {
-			this.setAmélioré(this.getAmélioré()+1);
-			this.setDegats(this.getDegats()+10);
+	public void Ameliorer(Joueur _Joueur) {
+		((Arme)_Joueur.getEnMain()).setDegats(_Joueur.getNiveau()*3);
+		switch (((Arme)_Joueur.getEnMain()).getType()) {
+		case EpéeLongue:
+			((Arme)_Joueur.getEnMain()).setDegats(_Joueur.getNiveau()*5);
+			((Arme)_Joueur.getEnMain()).setNiveau(_Joueur.getNiveau());
+			break;
+			
+		case EpéeCourte:
+			((Arme)_Joueur.getEnMain()).setDegats(_Joueur.getNiveau()*3);
+			((Arme)_Joueur.getEnMain()).setNiveau(_Joueur.getNiveau());
+			break;
+		
+		case Arc:
+			((Arme)_Joueur.getEnMain()).setDegats(_Joueur.getNiveau()*2);
+			((Arme)_Joueur.getEnMain()).setNiveau(_Joueur.getNiveau());
+			break;
+			
+		default:
+			break;
+		}
+	}
+	
+	public void Reparer(Joueur _Joueur) {
+		switch (((Arme)_Joueur.getEnMain()).getType()) {
+		case EpéeLongue:
+			((Arme)_Joueur.getEnMain()).setDurabilité(20);
+			break;
+			
+		case EpéeCourte:
+			((Arme)_Joueur.getEnMain()).setDurabilité(10);
+			break;
+		
+		case Arc:
+			((Arme)_Joueur.getEnMain()).setDurabilité(15);
+			break;
+			
+		default:
+			break;
 		}
 	}
 	
@@ -81,20 +111,16 @@ public class Arme extends Item {
 		Portée = portée;
 	}
 	
-	public int getAmélioré() {
-		return Amélioré;
-	}
-	
-	public void setAmélioré(int amélioré) {
-		Amélioré = amélioré;
-	}
-	
 	public int getDegats() {
 		return Degats;
 	}
 	
 	public void setDegats(int degats) {
 		Degats = degats;
+	}
+	
+	public String toString() {
+		return "Type:"+this.getType()+" Niveau:"+this.getNiveau() +" Durabilité:"+this.getDurabilité();
 	}
 	
 
