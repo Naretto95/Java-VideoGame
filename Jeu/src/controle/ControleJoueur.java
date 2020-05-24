@@ -1,84 +1,95 @@
 package controle;
 
-import java.util.ArrayList;
-import java.util.Observable;
-import java.util.Observer;
-
+import Jeu.Arme;
 import Jeu.Carte;
-import Jeu.Case;
+import Jeu.Ennemi;
+import Jeu.Entité;
+import Jeu.Item;
 import Jeu.Joueur;
 import javafx.event.EventHandler;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 
 
-public class ControleJoueur implements Observer,EventHandler<KeyEvent>,Runnable{
+public class ControleJoueur extends ControleEntite implements EventHandler<KeyEvent>,Runnable{
 	
 	
-	private Carte carte;
 	private Joueur joueur;
-	private GraphicsContext gc;
-	
-
-	private int positionXPixel;
-	private int positionYPixel;
-	private double indice=0;
+	private KeyCode lastDirection=KeyCode.DOWN;
 	private int distMinBordEcranX=20;
-	private int distMinBordEcranY=20;
-	private int vitesse = 20;
-	private boolean avanceD = false;
-	private boolean avanceG = false;
-	private boolean avanceH = false;
-	private boolean avanceB = false;
-	
-	
-	private int hauteurPixelEntite=120;
-	private int largeurPixelEntite=120;
-	private int deltaXHitBox;
-	private int deltaYHitBox;
+	private int distMinBordEcranY=20;	
+	private int speed=10;
+	private int distance = 0;
+	private int bouge=0;
+	private boolean attaqueEnCours=false;
 
-	private Image feuilleDeSpriteEntite = new Image("file:link.png");
-	
-	
-
-	public ControleJoueur(Carte carte, Joueur joueur, GraphicsContext gc){
-		super();
-		this.carte = carte;
-		this.deltaXHitBox=0;
-		this.deltaYHitBox=0;
+	public ControleJoueur(String feuilleDeSpriteEntite,Carte carte, Joueur joueur, GraphicsContext gc,int hauteurPixelEntite,int largeurPixelEntite){
+		super(feuilleDeSpriteEntite,carte,gc,(Entité) joueur,hauteurPixelEntite,largeurPixelEntite);
 		this.joueur = joueur;
-		this.gc=gc;
-		this.positionXPixel=((this.joueur.getPositionX()+1)*this.carte.getLargeurCasePixel())-this.carte.getLargeurCasePixel()/2 - this.carte.getFenetreEcran().getPosXPixelEcran()-this.largeurPixelEntite/2;
-		this.positionYPixel=((this.joueur.getPositionY()+1)*this.carte.getHauteurCasePixel())-this.carte.getHauteurCasePixel()/2 - this.carte.getFenetreEcran().getPosYPixelEcran()-(this.hauteurPixelEntite/2);
-		this.carte.mettreEntite(joueur, this.joueur.getPositionY(), this.joueur.getPositionX());
-		afficheCarte();
-		afficheJoueur(KeyCode.RIGHT);
 	}
 	
+	
+	//gestion des input clavier pour le joueur
 	public void handle(KeyEvent event){
 		//si on appuye sur une touche
 		if (event.getEventType()==KeyEvent.KEY_PRESSED) {
-			System.out.println("vous avez cliqué");
 			switch(event.getCode()) {
-			case UP:
+			case SPACE:
+				bouge=0;
+				this.attaqueEnCours=true;
+				avanceB=false;
+				avanceD=false;
+				avanceG=false;
+				avanceH=false;
+				this.distance = this.attaque();
+				if (!this.attaqueEnCours) {
+				new Thread(new Runnable() {
+
+					@Override
+					public void run() {
+						// TODO Auto-generated method stub
+						int i = 0;
+						while(i<10) {
+							try {
+								Thread.sleep(100);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							afficheAttaque();
+							i++;
+						}
+						attaqueEnCours=false;
+					}}).start();
+				}
+				break;
+			case Z:
+				bouge=1;
 				avanceB=false;
 				avanceH=true;
+				this.lastDirection=KeyCode.UP;
 				break;
-			case DOWN:
+			case S:
+				bouge=1;
 				avanceH=false;
 				avanceB=true;
+				this.lastDirection=KeyCode.DOWN;
 				break;
-			case LEFT:
+			case Q:
+				bouge=1;
 				avanceD=false;
 				avanceG=true;
+				this.lastDirection=KeyCode.LEFT;
 				break;
-			case RIGHT:
+			case D:
+				bouge=1;
 				avanceG=false;
 				avanceD=true;
+				this.lastDirection=KeyCode.RIGHT;
+				break;
+			case SHIFT:
+				vitesse=speed;
 				break;
 			default:
 				break;
@@ -87,29 +98,169 @@ public class ControleJoueur implements Observer,EventHandler<KeyEvent>,Runnable{
 		}
 		//si on relache la touche
 		if (event.getEventType()==KeyEvent.KEY_RELEASED) {
-			System.out.println("vous avez relache");
 			switch (event.getCode()) {
-				case UP:
+				case SPACE:
+					bouge=1;
+					break;
+				case Z:
 					avanceH=false;
 					break;
-				case DOWN:
+				case S:
 					avanceB=false;
 					break;
-				case LEFT:
+				case Q:
 					avanceG=false;
 					break;
-				case RIGHT:
+				case D:
 					avanceD=false;
 					break;
+				case SHIFT:
+					vitesse=5;
 				default:
 					break;
 		
+			}
+			if (!(this.avanceG||this.avanceD||this.avanceH||this.avanceB)) {
+				this.bouge=0;
 			}
 		}
 	}
 	
 	
-	public void update(Observable o, Object arg) {
+	public void deplacer(KeyCode kc) {
+
+		switch (kc) {
+		case UP:
+			if (!detecteCollisionsMouvement(0,-vitesse) && this.getPositionYPixel()-this.distMinBordEcranY-vitesse>0) {this.changerPositionPixel(0, -vitesse);}
+			if(this.carte.getFenetreEcran().getPosYPixelEcran()+this.getPositionYPixel()+this.carte.getHauteurCasePixel()/2<(this.joueur.getPositionY())*this.carte.getHauteurCasePixel()){
+				this.carte.mettreEntite(this.joueur, this.joueur.getPositionY()-1, this.joueur.getPositionX());
+			}
+			break;
+		case DOWN:
+			if (!detecteCollisionsMouvement(0,vitesse) && this.getPositionYPixel()+this.carte.getHauteurCasePixel()+this.distMinBordEcranY+vitesse<this.carte.getFenetreEcran().getHauteurPixelEcran()) {this.changerPositionPixel(0, vitesse);}
+			if(this.carte.getFenetreEcran().getPosYPixelEcran()+this.getPositionYPixel()+this.carte.getHauteurCasePixel()/2>(this.joueur.getPositionY()+1)*this.carte.getHauteurCasePixel()){
+				this.carte.mettreEntite(this.joueur, this.joueur.getPositionY()+1, this.joueur.getPositionX());
+			}
+			break;
+		case LEFT:
+			if (!detecteCollisionsMouvement(-vitesse,0) && this.getPositionXPixel()-this.distMinBordEcranX-vitesse>0) {this.changerPositionPixel(-vitesse, 0);}
+			if(this.carte.getFenetreEcran().getPosXPixelEcran()+this.getPositionXPixel()+this.carte.getLargeurCasePixel()/2<(this.joueur.getPositionX())*this.carte.getLargeurCasePixel()){
+				this.carte.mettreEntite(this.joueur, this.joueur.getPositionY(), this.joueur.getPositionX()-1);
+			}
+			break;
+		case RIGHT:
+			if (!detecteCollisionsMouvement(vitesse,0) && this.getPositionXPixel()+this.carte.getLargeurCasePixel()+this.distMinBordEcranX+vitesse<this.carte.getFenetreEcran().getLargeurPixelEcran()) {this.changerPositionPixel(vitesse, 0);}
+			if(this.carte.getFenetreEcran().getPosXPixelEcran()+this.getPositionXPixel()+this.carte.getLargeurCasePixel()/2>(this.joueur.getPositionX()+1)*this.carte.getLargeurCasePixel()){
+				this.carte.mettreEntite(this.joueur, this.joueur.getPositionY(), this.joueur.getPositionX()+1);
+			}
+			break;
+		default:
+			break;
+		}
+		System.out.println("je suis en case :"+this.joueur.getPositionY()+" ,"+this.joueur.getPositionX());
+		System.out.println("Ma nouvelle position est "+this.getPositionXPixel()+","+this.getPositionYPixel());
+	}
+	
+	public int attaque() {
+		Item itemEnMain = this.joueur.getEnMain();
+			int portee=0;
+			if (itemEnMain instanceof Arme) {portee= ((Arme) itemEnMain).getPortée();}
+			int distance = 0;
+			while (distance <= portee) {
+				switch(this.lastDirection) {
+				case UP:
+					if (this.joueur.getPositionY()-1-distance>-1) {
+					Object objet1 = this.carte.getCase(this.joueur.getPositionY()-1-distance, this.joueur.getPositionX()).getContenu();
+					if (objet1 instanceof Ennemi) {
+						this.joueur.Utiliser((Entité) objet1);
+						return distance;
+					}
+					else {distance++;}
+					}
+					else {return -1;}
+					break;
+				case DOWN:
+					if (this.joueur.getPositionY()+1+distance<this.carte.getImagesCasesCarte().size()) {
+					Object objet2 = this.carte.getCase(this.joueur.getPositionY()+1+distance, this.joueur.getPositionX()).getContenu();
+					if (objet2 instanceof Ennemi) {
+						this.joueur.Utiliser((Entité) objet2);
+						return distance;
+					}
+					else {distance++;}
+					}
+					else {return -1;}
+					break;
+				case RIGHT:
+					if (this.joueur.getPositionX()+1+distance<this.carte.getImagesCasesCarte().get(this.joueur.getPositionY()).size()) {
+					Object objet3 = this.carte.getCase(this.joueur.getPositionY(), this.joueur.getPositionX()+1+distance).getContenu();
+					if (objet3 instanceof Ennemi) {
+						this.joueur.Utiliser((Entité) objet3);
+						return distance; 
+					}
+					else {distance++;}
+					}
+					else {return -1;}
+					break;
+				case LEFT:
+					if (this.joueur.getPositionX()-1-distance>-1) {
+					Object objet4 = this.carte.getCase(this.joueur.getPositionY(), this.joueur.getPositionX()-1-distance).getContenu();
+					if (objet4 instanceof Ennemi) {
+						this.joueur.Utiliser((Entité) objet4);
+						return distance; 
+					}
+					else {distance++;}
+					}else  {return -1;}
+					break;
+				default:
+					break;
+				}
+			}
+		return -1;
+	}
+	
+	public void afficheAttaque() {
+		if (this.distance>-1) {
+		switch (this.lastDirection) {
+		case UP:
+			gc.drawImage(this.feuilleDeSpriteEntite,879,1402,237,222,(this.joueur.getPositionX())*this.carte.getLargeurCasePixel()-this.carte.getFenetreEcran().getPosXPixelEcran(),(this.joueur.getPositionY()-1-distance)*this.carte.getHauteurCasePixel()-this.carte.getFenetreEcran().getPosYPixelEcran(),this.carte.getLargeurCasePixel(),this.carte.getHauteurCasePixel());
+			break;
+		case DOWN:
+			gc.drawImage(this.feuilleDeSpriteEntite,879,1402,237,222,(this.joueur.getPositionX())*this.carte.getLargeurCasePixel()-this.carte.getFenetreEcran().getPosXPixelEcran(),(this.joueur.getPositionY()+1+distance)*this.carte.getHauteurCasePixel()-this.carte.getFenetreEcran().getPosYPixelEcran(),this.carte.getLargeurCasePixel(),this.carte.getHauteurCasePixel());
+			break;
+		case LEFT:
+			gc.drawImage(this.feuilleDeSpriteEntite,879,1402,237,222,(this.joueur.getPositionX()-1-distance)*this.carte.getLargeurCasePixel()-this.carte.getFenetreEcran().getPosXPixelEcran(),(this.joueur.getPositionY())*this.carte.getHauteurCasePixel()-this.carte.getFenetreEcran().getPosYPixelEcran(),this.carte.getLargeurCasePixel(),this.carte.getHauteurCasePixel());
+			break;
+		case RIGHT:
+			gc.drawImage(this.feuilleDeSpriteEntite,879,1402,237,222,(this.joueur.getPositionX()+1+distance)*this.carte.getLargeurCasePixel()-this.carte.getFenetreEcran().getPosXPixelEcran()+20,(this.joueur.getPositionY())*this.carte.getHauteurCasePixel()-this.carte.getFenetreEcran().getPosYPixelEcran(),this.carte.getLargeurCasePixel(),this.carte.getHauteurCasePixel());
+			break;
+		default:
+			break;
+		}
+		}
+	}
+	
+	
+	public void afficheJoueur(KeyCode keycode,int bouge) {
+		//l'affichage des entites est variable pour chaque feuille de Sprite qui lui correspond
+		indiceSprite=(indiceSprite+1);//on change l'image affichée par celle qui suit dans la feuille
+		switch(keycode) {
+		//pour le joueur qui se déplace dans plusieurs directions il faut adapter l'image au sens du mouvement
+		case RIGHT:
+			gc.drawImage(this.feuilleDeSpriteEntite,(((indiceSprite%10)*bouge+4)%10)*this.largeurPixelEntite,925,this.largeurPixelEntite,this.hauteurPixelEntite,this.getPositionXPixel(),this.getPositionYPixel()+this.carte.getHauteurCasePixel()-this.hauteurPixelEntite/this.facteurTaille,this.largeurPixelEntite/this.facteurTaille,this.hauteurPixelEntite/this.facteurTaille);
+			break;
+		case LEFT:
+			gc.drawImage(this.feuilleDeSpriteEntite,(indiceSprite%10)*bouge*this.largeurPixelEntite,660,this.largeurPixelEntite,this.hauteurPixelEntite,this.getPositionXPixel(),this.getPositionYPixel()+this.carte.getHauteurCasePixel()-this.hauteurPixelEntite/this.facteurTaille,this.largeurPixelEntite/this.facteurTaille,this.hauteurPixelEntite/this.facteurTaille);
+			break;
+		case UP:
+			gc.drawImage(this.feuilleDeSpriteEntite,(indiceSprite%10)*bouge*this.largeurPixelEntite,785,this.largeurPixelEntite,this.hauteurPixelEntite,this.getPositionXPixel(),this.getPositionYPixel()+this.carte.getHauteurCasePixel()-this.hauteurPixelEntite/this.facteurTaille,this.largeurPixelEntite/this.facteurTaille,this.hauteurPixelEntite/this.facteurTaille);
+			break;
+		case DOWN:
+			gc.drawImage(this.feuilleDeSpriteEntite,(indiceSprite%10)*bouge*this.largeurPixelEntite,530,this.largeurPixelEntite,this.hauteurPixelEntite,this.getPositionXPixel(),this.getPositionYPixel()+this.carte.getHauteurCasePixel()-this.hauteurPixelEntite/this.facteurTaille,this.largeurPixelEntite/this.facteurTaille,this.hauteurPixelEntite/this.facteurTaille);
+			break;
+		default:
+			break;
+		}
+
 	}
 	
 	public void run() {
@@ -122,160 +273,27 @@ public class ControleJoueur implements Observer,EventHandler<KeyEvent>,Runnable{
 			}
 			if(this.avanceD) {
 				deplacer(KeyCode.RIGHT);
-				afficheCarte();
-				afficheJoueur(KeyCode.RIGHT);
 			}
 			if(this.avanceH) {
 				deplacer(KeyCode.UP);
-				afficheCarte();
-				afficheJoueur(KeyCode.UP);
 			}
 			if(this.avanceB) {
 				deplacer(KeyCode.DOWN);
-				afficheCarte();
-				afficheJoueur(KeyCode.DOWN);
 			}
 			if(this.avanceG) {
 				deplacer(KeyCode.LEFT);
-				afficheCarte();
-				afficheJoueur(KeyCode.LEFT);
 			}
+			
 		}
 	}
-	
-	
-	public void deplacer(KeyCode kc) {
 
-		System.out.println("le joueur a bouge");
-		
-		switch (kc) {
-		case UP:
-			//si le perso n'a pas atteint le bord de l'écran
-			if (this.getPositionYPixel()-vitesse-this.distMinBordEcranY>0) {
-				//si le perso s'approche d'une nouvelle case(il ne faut pas superposer les persos dont le sprite dépasse la taille standard d'une case)
-				if(this.carte.getFenetreEcran().getPosYPixelEcran()+this.getPositionYPixel()+this.hauteurPixelEntite/2 -this.deltaYHitBox/2-vitesse<(this.joueur.getPositionY())*this.carte.getHauteurCasePixel()) {
 
-					System.out.println("je change vers le haut");
-					//si cette case est libre
-					if(this.carte.getCase(this.joueur.getPositionY()-1, this.joueur.getPositionX()).getContenu()==Case.VIDE) {
-						this.changerPositionPixel(0, -vitesse);
-						//si le perso s'est non seulement approché masi est aussi rentré dans la case
-						if (this.carte.getFenetreEcran().getPosYPixelEcran()+this.getPositionYPixel()+this.hauteurPixelEntite/2<this.joueur.getPositionY()*this.carte.getHauteurCasePixel()) {
-							this.carte.mettreEntite(this.joueur, this.joueur.getPositionY()-1, this.joueur.getPositionX());
-						}
-					}
-				// si le perso ne s'approche pas d'une nouvelle case
-				}else {
-					this.changerPositionPixel(0, -vitesse);
-				}
-			}
-			break;
-		case DOWN:
-			if (this.getPositionYPixel()+this.hauteurPixelEntite+vitesse+this.distMinBordEcranY<this.carte.getFenetreEcran().getHauteurPixelEcran()) {
-					if(this.carte.getFenetreEcran().getPosYPixelEcran()+this.getPositionYPixel()+this.hauteurPixelEntite/2 +this.deltaYHitBox/2+vitesse>(this.joueur.getPositionY()+1)*this.carte.getHauteurCasePixel()) {
-						if(this.carte.getCase(this.joueur.getPositionY()+1, this.joueur.getPositionX()).getContenu()==Case.VIDE) {
-							this.changerPositionPixel(0, vitesse);
-							if(this.carte.getFenetreEcran().getPosYPixelEcran()+this.getPositionYPixel()+this.hauteurPixelEntite/2>(this.joueur.getPositionY()+1)*this.carte.getHauteurCasePixel()){
-								this.carte.mettreEntite(this.joueur, this.joueur.getPositionY()+1, this.joueur.getPositionX());
-							}
-						}
-					}else {
-						this.changerPositionPixel(0, vitesse);
-					}
-				}
-			break;
-		case LEFT:
-			if (this.getPositionXPixel()-vitesse-this.distMinBordEcranX>0) {
-					if(this.carte.getFenetreEcran().getPosXPixelEcran()+this.getPositionXPixel()+this.largeurPixelEntite/2 -this.deltaXHitBox/2-vitesse<(this.joueur.getPositionX())*this.carte.getLargeurCasePixel()) {
-						if(this.carte.getCase(this.joueur.getPositionY(), this.joueur.getPositionX()-1).getContenu()==Case.VIDE) {
-							this.changerPositionPixel(-vitesse, 0);
-							if(this.carte.getFenetreEcran().getPosXPixelEcran()+this.getPositionXPixel()+this.largeurPixelEntite/2<(this.joueur.getPositionX())*this.carte.getLargeurCasePixel()){
-								this.carte.mettreEntite(this.joueur, this.joueur.getPositionY(), this.joueur.getPositionX()-1);
-							}
-							
-						}
-					}else {
-						this.changerPositionPixel(-vitesse, 0);
-					}
-				}
-			break;
-		case RIGHT:
-			if (this.getPositionXPixel()+this.largeurPixelEntite+vitesse+this.distMinBordEcranX<this.carte.getFenetreEcran().getLargeurPixelEcran()) {
-					if(this.carte.getFenetreEcran().getPosXPixelEcran()+this.getPositionXPixel()+this.largeurPixelEntite/2 +this.deltaXHitBox/2+vitesse>(this.joueur.getPositionX()+1)*this.carte.getLargeurCasePixel()) {
-						if(this.carte.getCase(this.joueur.getPositionY(), this.joueur.getPositionX()+1).getContenu()==Case.VIDE) {
-							this.changerPositionPixel(vitesse, 0);
-							if(this.carte.getFenetreEcran().getPosXPixelEcran()+this.getPositionXPixel()+this.largeurPixelEntite/2>(this.joueur.getPositionX()+1)*this.carte.getLargeurCasePixel()) {
-								this.carte.mettreEntite(this.joueur, this.joueur.getPositionY(), this.joueur.getPositionX()+1);
-							}
-						}
-					}else {
-						this.changerPositionPixel(vitesse, 0);
-					}
-				}
-			break;
-		default:
-			break;
-		}
-		System.out.println("je suis en case :"+this.joueur.getPositionY()+" ,"+this.joueur.getPositionX());
-	}
-	
-	
-	public void effaceJoueur() {
-		gc.fillRect(this.getPositionXPixel()-20, this.getPositionYPixel()-20,200,200);
-	}
-	
-	public void afficheJoueur(KeyCode keycode) {
-		indice=(indice+1)%10;
-		switch(keycode) {
-		case RIGHT:
-			gc.drawImage(this.feuilleDeSpriteEntite,indice*this.largeurPixelEntite,925,this.largeurPixelEntite,this.hauteurPixelEntite,this.getPositionXPixel(),this.getPositionYPixel(),this.carte.getLargeurCasePixel(),this.carte.getHauteurCasePixel());
-			break;
-		case LEFT:
-			gc.drawImage(this.feuilleDeSpriteEntite,indice*this.largeurPixelEntite,660,this.largeurPixelEntite,this.hauteurPixelEntite,this.getPositionXPixel(),this.getPositionYPixel(),this.carte.getLargeurCasePixel(),this.carte.getHauteurCasePixel());
-			break;
-		case UP:
-			gc.drawImage(this.feuilleDeSpriteEntite,indice*this.largeurPixelEntite,785,this.largeurPixelEntite,this.hauteurPixelEntite,this.getPositionXPixel(),this.getPositionYPixel(),this.carte.getLargeurCasePixel(),this.carte.getHauteurCasePixel());
-			break;
-		case DOWN:
-			gc.drawImage(this.feuilleDeSpriteEntite,indice*this.largeurPixelEntite,530,this.largeurPixelEntite,this.hauteurPixelEntite,this.getPositionXPixel(),this.getPositionYPixel(),this.carte.getLargeurCasePixel(),this.carte.getHauteurCasePixel());
-			break;
-		default:
-			break;
-		}
-
-	}
-	
-	public void changerPositionPixel(int deltaXPixel, int deltaYPixel) {
-		this.setPositionXPixel(this.getPositionXPixel()+deltaXPixel);
-		this.setPositionYPixel(this.getPositionYPixel()+deltaYPixel);
-		System.out.println("Ma nouvelle position est "+this.getPositionXPixel()+","+this.getPositionYPixel());
-	}
-
-	public int getPositionXPixel() {
-		return positionXPixel;
+	public KeyCode getLastDirection() {
+		return lastDirection;
 	}
 
 
-	public void setPositionXPixel(int positionXPixel) {
-		this.positionXPixel = positionXPixel;
-	}
-
-
-	public int getPositionYPixel() {
-		return positionYPixel;
-	}
-
-
-	public void setPositionYPixel(int positionYPixel) {
-		this.positionYPixel = positionYPixel;
-	}
-	
-	public void afficheCarte() {
-		ArrayList<ArrayList<Image>> imagesCasesCarte = carte.getImagesCasesCarte();
-		for (int i = 0 ; i < imagesCasesCarte.size();i++) {
-			for (int j = 0 ; j < imagesCasesCarte.get(i).size();j++) {
-				gc.drawImage(imagesCasesCarte.get(i).get(j), this.carte.getHauteurCasePixel()*j, this.carte.getLargeurCasePixel()*i);
-			}
-		}
+	public int getBouge() {
+		return bouge;
 	}
 }

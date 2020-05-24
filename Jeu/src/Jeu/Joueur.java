@@ -16,8 +16,8 @@ public class Joueur extends Entité {
 	
 	public void levelup() {
 		if (this.getExperience()>this.getNiveau()*100) {
-			this.setNiveau(this.getNiveau()+1);
 			this.setExperience(this.getExperience()-this.getNiveau()*100);
+			this.setNiveau(this.getNiveau()+1);
 			this.getInventaireArme().get(0).setDegats(this.getNiveau());
 			this.getInventaireArme().get(0).setNiveau(this.getNiveau());
 		}
@@ -27,6 +27,7 @@ public class Joueur extends Entité {
 		if (this.getEnMain() instanceof Arme) {
 			AmeliorerArme((Arme)this.getEnMain());
 		}
+		this.ActualiserInventaire();
 	}
 	
 	public void AmeliorerArme(Arme _Arme) {
@@ -65,12 +66,15 @@ public class Joueur extends Entité {
 				break;
 			}
 		}
+		this.setChanged();
+		this.notifyObservers(Entité.RESSOURCES_MODIFIEES);
 	}
 	
 	public void Reparer() {
 		if (this.getEnMain() instanceof Arme) {
 			ReparerArme((Arme)this.getEnMain());
 		}
+		this.ActualiserInventaire();
 	}
 	
 	public void ReparerArme(Arme _Arme) {
@@ -151,32 +155,53 @@ public class Joueur extends Entité {
 		return null;
 	}
 	
-	public void Ramasser(Item _Item) {
-		int accum=0;
-		if (_Item.getNiveau()<=this.getNiveau()) {
-			if (_Item instanceof Arme) {
-				for (int i = 0; i < this.getInventaireArme().size(); i++) {
-					if (this.getInventaireArme().get(i).getType()==((Arme)_Item).getType()) {
-						accum++;
+	public boolean Ramasser(Objet _Objet) {
+		if (_Objet instanceof Item) {
+			int accum=0;
+			if (((Item)_Objet).getNiveau()<=this.getNiveau()) {
+				if (((Item)_Objet) instanceof Arme) {
+					for (int i = 0; i < this.getInventaireArme().size(); i++) {
+						if (this.getInventaireArme().get(i).getType()==((Arme)((Item)_Objet)).getType()) {
+							accum++;
+						}
+					}
+					if (accum<3) {
+						((Arme)((Item)_Objet)).setRamassé(true);
+						this.getInventaireArme().add((Arme)((Item)_Objet));
+						this.setChanged();
+						this.notifyObservers(Entité.CHANGEMENT_ITEM);
+						return true;
 					}
 				}
-				if (accum<3) {
-					((Arme)_Item).setRamassé(true);
-					this.getInventaireArme().add((Arme)_Item);
-				}
-			}
-			if (_Item instanceof Potion) {
-				for (int i = 0; i < this.getInventairePotion().size(); i++) {
-					if (this.getInventairePotion().get(i).getEffet()==((Potion)_Item).getEffet()) {
-						accum++;
+				if (((Item)_Objet) instanceof Potion) {
+					for (int i = 0; i < this.getInventairePotion().size(); i++) {
+						if (this.getInventairePotion().get(i).getEffet()==((Potion)((Item)_Objet)).getEffet()) {
+							accum++;
+						}
 					}
-				}
-				if (accum<3) {
-					((Potion)_Item).setRamassé(true);
-					this.getInventairePotion().add((Potion)_Item);
+					if (accum<3) {
+						((Potion)((Item)_Objet)).setRamassé(true);
+						this.getInventairePotion().add((Potion)((Item)_Objet));
+						this.setChanged();
+						this.notifyObservers(Entité.CHANGEMENT_ITEM);
+						return true;
+					}
 				}
 			}
 		}
+		if (_Objet instanceof Ressource) {
+			for(Entry<Ressource, Integer> entry : this.getInventaireRessource().entrySet()) {
+				Ressource cle = entry.getKey();
+			    if (((Ressource)_Objet).getType()==cle.getType()) {
+			    	cle.setRamassé(true);
+			    	this.getInventaireRessource().put(cle,this.getInventaireRessource().get(cle)+1);
+			    	this.setChanged();
+			    	this.notifyObservers(Entité.RESSOURCES_MODIFIEES);
+			    	return true;
+				}
+			}
+		}
+		return false;
 	}
 	
 	public void Bouger(int guauche, int droite, int bas, int haut){

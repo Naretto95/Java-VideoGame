@@ -26,7 +26,7 @@ public class Arme extends Item {
 		
 		case Arc:
 			this.setDegats(_Niveau * 2);
-			this.setDurabilité(3);
+			this.setDurabilité(15);
 			this.setType(_Type);
 			this.setPortée(10);
 			break;

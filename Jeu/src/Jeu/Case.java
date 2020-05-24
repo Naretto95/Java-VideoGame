@@ -2,18 +2,22 @@
 package Jeu;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Stack;
 
-public class Case {
+public class Case implements Observer{
 	public static Integer VIDE = new Integer(0);
 	public static Integer OBSTACLE = new Integer(1);
 	public static Integer PORTE = new Integer(2);
+	public static Integer OUVERTURE_PORTE= new Integer(30);
 	
 	private Object contenu;
 	private Stack<Item> items;
 	private Stack<Ressource> ressources;
-	
-	
+
+
 	public Case(Stack<Item> items,Stack<Ressource> ressources) {
 		this.contenu=VIDE;
 		this.items = items;
@@ -88,6 +92,39 @@ public class Case {
 	}
 
 	public void setContenu(Object contenu) {
+		if (this.getContenu() instanceof Entité) {
+			Entité entiteAncienne = (Entité) this.getContenu();
+			entiteAncienne.deleteObserver(this);
+		}
+		if (contenu instanceof Entité) {
+			Entité entiteNouvelle = (Entité) contenu;
+			entiteNouvelle.addObserver(this);
+		}
 		this.contenu = contenu;
+	}
+
+
+	@Override
+	public void update(Observable o, Object arg) {
+		// TODO Auto-generated method stub
+		if (arg.equals(Entité.EST_MORT)) {
+			if (o instanceof Entité && this.getContenu() instanceof Entité && ((Entité) this.getContenu()).equals((Entité) o)) {
+				Entité entiteMorte = (Entité) o;
+				List<Arme> armes = entiteMorte.getInventaireArme();
+				while (armes.size()>0) {
+					this.addItem(armes.remove(armes.size()-1));
+				}
+				List<Potion> potions = entiteMorte.getInventairePotion();
+				while (potions.size()>0) {
+					this.addItem(potions.remove(potions.size()-1));
+				}
+				o.deleteObserver(this);
+			}else {
+				System.out.println("Il y a un problème avec le dépot de l'inventaire de ce défunt");
+			}
+		}
+		if (arg.equals(OUVERTURE_PORTE)) {
+			this.setContenu(VIDE);
+		}
 	}
 }

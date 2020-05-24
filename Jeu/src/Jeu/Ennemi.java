@@ -1,5 +1,6 @@
 package Jeu;
 
+import java.util.Map.Entry;
 
 public class Ennemi extends Entité {
 	
@@ -56,11 +57,24 @@ public class Ennemi extends Entité {
 	public void Jeter() {
 		for (int i = 0; i < this.getInventaireArme().size(); i++) {
 			if (this.getInventaireArme().get(i).getType()!=TypeArme.Main) {
+				this.getInventaireArme().get(i).setRamassé(false);
 				//AJOUTER A LA CASE
 			}
 		}
 		for (int i = 0; i < this.getInventairePotion().size(); i++) {
+			this.getInventairePotion().get(i).setRamassé(false);
 			//AJOUTER A LA CASE
+		}
+		for(Entry<Ressource, Integer> entry : this.getInventaireRessource().entrySet()) {
+			Ressource cle = entry.getKey();
+			Integer valeur = entry.getValue();
+			/*while (valeur>0) {
+				this.getInventaireRessource().put(cle,this.getInventaireRessource().get(cle)-1);
+				cle.setRamassé(false);
+				// AJOUTER A LA CASE
+				
+			}*/
+			
 		}
 	}
 	

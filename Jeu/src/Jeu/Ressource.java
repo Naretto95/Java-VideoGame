@@ -16,5 +16,8 @@ public class Ressource extends Objet {
 	public void setType(TypeRessource type) {
 		Type = type;
 	}
-
+	
+	public String toString() {
+		return ""+this.getType();
+	}
 }
