@@ -1,6 +1,12 @@
 package Jeu;
 
-public enum EtatEntité {
+import java.io.Serializable;
+/**
+ * 
+ * @author Lilian Naretto
+ *
+ */
+public enum EtatEntité implements Serializable {
 	Vivant,
 	Mort,
 	Etourdis

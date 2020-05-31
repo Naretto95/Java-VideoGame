@@ -1,40 +1,64 @@
 package controle;
 
 import java.util.Observable;
-import java.util.Observer;
 import java.util.Random;
 
 import Jeu.*;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.input.KeyCode;
+import threadService.EnnemiService;
 
 
-public class ControleEnnemi extends ControleEntite implements Observer {
+public class ControleEnnemi extends ControleEntite{
 
-     public ControleEnnemi(String feuilleDeSpriteEntite, Carte carte, GraphicsContext gc, Entité entite,
+     /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private EnnemiService ennemiService;
+	public ControleEnnemi(String feuilleDeSpriteEntite, Carte carte, GraphicsContext gc, Entité entite,
                           int hauteurPixelEntite, int largeurPixelEntite) {
 
         super(feuilleDeSpriteEntite, carte, gc, entite, hauteurPixelEntite, largeurPixelEntite);
-       // ControleCarte.afficheCarte();
-
+        this.ennemiService = new EnnemiService(this);
+        this.ennemiService.start();
     }
+	
+	/**{@literal l'ennemi cherche a attaquer dans toutes les directions et frappe si il y a un joueur}*/
+	public void autoDefenseCollision() {
+		int i = this.getEntite().getPositionY();
+		int j = this.getEntite().getPositionX();
+		autoDefenseCollisionCase(i-1,j);
+		autoDefenseCollisionCase(i+1,j);
+		autoDefenseCollisionCase(i,j+1);
+		autoDefenseCollisionCase(i,j-1);
+	}
+	
+	/**{@literal l'ennemi frappe si il y a un joueur dans la case i,j}*/
+	public void autoDefenseCollisionCase(int i,int j) {
+		if(i>=0 && j>=0 && i<this.getCarte().getImagesCasesCarte().size() && j<this.getCarte().getImagesCasesCarte().get(i).size()) {
+			Object objet = this.getCarte().getCase(i, j).getContenu();
+			if (this.getEntite() instanceof Ennemi && objet instanceof Joueur) {
+				Ennemi ennemi = (Ennemi) this.getEntite();
+				if (ennemi.getPositionY()<i) {this.setLastDirection(KeyCode.DOWN);}
+				else if (ennemi.getPositionY()>i) {this.setLastDirection(KeyCode.UP);}
+				else if (ennemi.getPositionX()<j) {this.setLastDirection(KeyCode.RIGHT);}
+				else if (ennemi.getPositionX()>j) {this.setLastDirection(KeyCode.LEFT);}
+				this.attaque();
+				}
+		}
+	}
 
 
     public void afficheEnnemi() {
-    	if (this.entite.getEtat()==EtatEntité.Vivant) {
-    		gc.drawImage(this.feuilleDeSpriteEntite,indiceSprite*this.largeurPixelEntite,0,
-                    this.largeurPixelEntite,this.hauteurPixelEntite,this.getPositionXPixel()-20,
-                    this.getPositionYPixel()+this.carte.getHauteurCasePixel()-this.hauteurPixelEntite-40,
-                    this.largeurPixelEntite+40,this.hauteurPixelEntite+40);
+		this.setPositionXPixel(((this.getEntite().getPositionX())*this.getCarte().getLargeurCasePixel()) - this.getCarte().getFenetreEcran().getPosXPixelEcran());
+		this.setPositionYPixel(((this.getEntite().getPositionY())*this.getCarte().getHauteurCasePixel()) - this.getCarte().getFenetreEcran().getPosYPixelEcran());
+    	if (this.getEntite().getEtat()!=EtatEntité.Mort) {
+    		getGc().drawImage(this.getFeuilleDeSpriteEntite(),getIndiceSprite()*this.getLargeurPixelEntite(),0,
+                    this.getLargeurPixelEntite(),this.getHauteurPixelEntite(),this.getPositionXPixel()-5,
+                    this.getPositionYPixel()+this.getCarte().getHauteurCasePixel()-this.getHauteurPixelEntite()-15,
+                    this.getLargeurPixelEntite()+10,this.getHauteurPixelEntite()+15);
     	}
-        
-
-
-    }
-
-
-    @Override
-    public void update(Observable o, Object arg) {
-
     }
 
     ////////////// quelques methodes qui nous servirons par la suite, mais appartiennent pas à cette classe ////////////////////
@@ -78,6 +102,13 @@ public class ControleEnnemi extends ControleEntite implements Observer {
         Random random = new Random();
         return TypeRessource.values()[random.nextInt(TypeRessource.values().length)];
     }
+
+
+	@Override
+	public void update(Observable o, Object arg) {
+		// TODO Auto-generated method stub
+		
+	}
 
     // pour supprimer un ennemi, on pourra faire ennemi.hide() ou bien setvisibility(false)
 

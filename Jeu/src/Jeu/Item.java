@@ -1,6 +1,16 @@
 package Jeu;
 
-public class Item extends Objet {
+import java.io.Serializable;
+/**
+ * 
+ * @author Lilian Naretto
+ *
+ */
+public class Item extends Objet implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private boolean Etat;
 	private int Niveau;
 	

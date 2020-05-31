@@ -1,14 +1,27 @@
 package Jeu;
 
-public class Arme extends Item {
+import java.io.Serializable;
+/**
+ * 
+ * @author Lilian Naretto
+ *
+ */
+
+public class Arme extends Item implements Serializable {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private int Durabilité;
 	private TypeArme Type;
+	private boolean DegatsUp;
 	private int Degats;
 	private int Portée;
 	
 	public Arme(TypeArme _Type, int _Niveau ){
 		super(true,_Niveau,false);
+		this.setDegatsUp(false);
 		switch (_Type) {
 		case EpéeLongue:
 			this.setDegats(_Niveau * 5);
@@ -68,18 +81,18 @@ public class Arme extends Item {
 		}
 	}
 	
-	public void Reparer(Joueur _Joueur) {
-		switch (((Arme)_Joueur.getEnMain()).getType()) {
+	public void Reparer(Entité _Entité) {
+		switch (((Arme)_Entité.getEnMain()).getType()) {
 		case EpéeLongue:
-			((Arme)_Joueur.getEnMain()).setDurabilité(20);
+			((Arme)_Entité.getEnMain()).setDurabilité(20);
 			break;
 			
 		case EpéeCourte:
-			((Arme)_Joueur.getEnMain()).setDurabilité(10);
+			((Arme)_Entité.getEnMain()).setDurabilité(10);
 			break;
 		
 		case Arc:
-			((Arme)_Joueur.getEnMain()).setDurabilité(15);
+			((Arme)_Entité.getEnMain()).setDurabilité(15);
 			break;
 			
 		default:
@@ -121,6 +134,14 @@ public class Arme extends Item {
 	
 	public String toString() {
 		return "Type:"+this.getType()+" Niveau:"+this.getNiveau() +" Durabilité:"+this.getDurabilité();
+	}
+
+	public boolean isDegatsUp() {
+		return DegatsUp;
+	}
+
+	public void setDegatsUp(boolean degatsUp) {
+		DegatsUp = degatsUp;
 	}
 	
 

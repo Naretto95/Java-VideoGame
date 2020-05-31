@@ -1,6 +1,7 @@
 package Jeu;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,20 +11,31 @@ import java.util.Observer;
 
 import controle.ControleEntite;
 import javafx.scene.image.Image;
-import javafx.scene.layout.StackPane;
+/**
+ * 
+ * @date 21/05/20
+ * @author Corentin BRILLANT
+ *
+ */
+public class Carte extends Observable implements Observer,Serializable{
 
-public class Carte implements Observer{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public static Integer CARTE_QUI_BOUGE = new Integer(40);
 	
-	private ArrayList<ArrayList<Image>> imagesCasesCarte;
-	private Map<String,Image> listeImagesElementsJeu;
+	private transient ArrayList<ArrayList<Image>> imagesCasesCarte;
+	private transient Map<String,Image> listeImagesElementsJeu;
 	private ArrayList<ArrayList<Case>> casesCarte;
 	private FenetreEcran fenetreEcran;
 	private int largeurCasePixel=50;
 	private int hauteurCasePixel=50;
-	private int hauteurFenetreJeu=1000;
-	private int largeurFenetreJeu=1000;
+	private int hauteurFenetreJeu=720;
+	private int largeurFenetreJeu=1280;
 	
-	public Carte(String repertoireImages, String[][] saisieCarte,double largeurFenetreJeu,double hauteurFenetreJeu,StackPane fenetre) {
+	public Carte(String repertoireImages, String[][] saisieCarte,double largeurFenetreJeu,double hauteurFenetreJeu) {
 		this.largeurFenetreJeu=(int) largeurFenetreJeu;
 		this.hauteurFenetreJeu=(int) hauteurFenetreJeu;
 		int nbLigne = saisieCarte.length;
@@ -60,6 +72,14 @@ public class Carte implements Observer{
 					porte.addObserver(this.getCase(i, casesCarte.get(i).size()-1));
 					porte.addObserver(this);
 					break;
+				case "enclume_ameliore.png":
+					Enclume enclume = new Enclume(TypeEnclume.EnclumeAmeliorer);
+					casesCarte.get(i).add(new Case(enclume));
+					break;
+				case "enclume_repare.png":
+					Enclume enclume2 = new Enclume(TypeEnclume.EnclumeReparer);
+					casesCarte.get(i).add(new Case(enclume2));
+					break;
 				default:
 					casesCarte.get(i).add(new Case());
 					break;				
@@ -69,6 +89,8 @@ public class Carte implements Observer{
 		
 	}
 	
+	/** {@literal met l'entité entite en case i,j si cela est possible}
+	 *  */	
 	public boolean mettreEntite(Entité entite,int i , int j) {
 		Case _case = this.getCase(i, j);
 		if (_case.getContenu()==Case.VIDE) {
@@ -105,6 +127,28 @@ public class Carte implements Observer{
 	public FenetreEcran getFenetreEcran() {
 		return fenetreEcran;
 	}
+	
+	/**{@literal déplacer la fenetre de l'ecran sur la carte d'un mouvement (deltaX, deltaY) en pixels}
+	*/
+	
+	public boolean deplaceFenetre(int deltaX, int deltaY) {
+		boolean result = this.fenetreEcran.deplaceFenetreEcran(deltaX, deltaY);
+		this.setChanged();
+		this.notifyObservers(CARTE_QUI_BOUGE);
+		return result;
+	}
+	
+	/**{@literal met à jour les images de la carte en fonction du contenu des cases}*/
+	public void majImagesCasesCarte() {
+		for (int i = 0;i <this.imagesCasesCarte.size();i++) {
+			for (int j = 0;j <this.imagesCasesCarte.get(i).size();j++) {
+				if (this.casesCarte.get(i).get(j).getContenu() instanceof Porte && ((Porte)this.casesCarte.get(i).get(j).getContenu()).isOpen) {
+					this.imagesCasesCarte.get(i).set(j,this.listeImagesElementsJeu.get("plancher.jpg"));
+				}
+				
+			}
+		}
+	}
 
 	public ArrayList<ArrayList<Image>> getImagesCasesCarte() {
 		return imagesCasesCarte;
@@ -117,10 +161,15 @@ public class Carte implements Observer{
 	public int getHauteurCasePixel() {
 		return hauteurCasePixel;
 	}
+	/**{@literal la classe statique des portes}*/
 	
-	public final class Porte extends Observable{
+	public final class Porte extends Observable implements Serializable {
 		
 		
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
 		private int nbCle;
 		private boolean isOpen=false;
 		
@@ -130,6 +179,7 @@ public class Carte implements Observer{
 			
 		}
 		
+		/**{@literal permet à l'entite controlée par ctlEntite d'ouvrir la porte uniquement si elle a assez de clés}*/
 		public boolean ouvre(ControleEntite ctlEntite) {
 			int nbClees=0;
 			Entité entite = ctlEntite.getEntite();
@@ -154,6 +204,7 @@ public class Carte implements Observer{
 		}
 		public void setOpen(boolean isOpen) {
 			this.isOpen = isOpen;
+			majImagesCasesCarte();
 			this.setChanged();
 			this.notifyObservers(Case.OUVERTURE_PORTE);
 		}
@@ -167,5 +218,9 @@ public class Carte implements Observer{
 	public void update(Observable arg0, Object arg1) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	public ArrayList<ArrayList<Case>> getCasesCarte() {
+		return casesCarte;
 	}
 }

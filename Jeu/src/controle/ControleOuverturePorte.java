@@ -5,6 +5,11 @@ import java.util.Observer;
 
 import Jeu.Carte.Porte;
 import javafx.scene.control.Button;
+/**
+ * @date 23/05/2020
+ * @author Corentin BRILLANT
+ */
+
 
 public class ControleOuverturePorte extends Button implements Observer,Runnable{
 	
@@ -25,6 +30,8 @@ public class ControleOuverturePorte extends Button implements Observer,Runnable{
 			this.setOnMouseClicked(e->{((Porte)arg1).ouvre(this.ctlEntite);});
 		}
 	}
+	
+	/** {@literal la méthode lancer le décompte pour afficher le bouton d'ouverture d'une porte}*/
 
 	@Override
 	public void run() {

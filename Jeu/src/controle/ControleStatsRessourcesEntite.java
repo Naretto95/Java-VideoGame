@@ -13,6 +13,11 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+/**
+ * @date 23/05/2020
+ * @author Corentin BRILLANT
+ */
+
 
 public class ControleStatsRessourcesEntite extends GridPane implements Observer{
 

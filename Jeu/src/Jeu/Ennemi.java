@@ -1,9 +1,20 @@
 package Jeu;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
-
-public class Ennemi extends Entité {
+/**
+ * 
+ * @author Lilian Naretto
+ *
+ */
+public class Ennemi extends Entité implements Serializable {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Categorie Categorie;
 	private Race Race;
 	private int ExperienceMonstre;
@@ -19,31 +30,31 @@ public class Ennemi extends Entité {
 		}
 		switch (this.getRace()) {
 		case Orc:
-			this.setEnMain(new Arme(TypeArme.EpéeLongue,this.getNiveau()));
 			this.getInventaireArme().add(new Arme(TypeArme.EpéeLongue,this.getNiveau()));
+			this.ChangerItem(new Arme(TypeArme.EpéeLongue,this.getNiveau()));
 			this.getInventairePotion().add(new Potion(Effet.Poison,this.getNiveau()));
 			this.getInventaireRessource().put(new Ressource(TypeRessource.Fer),1);
 			this.getInventaireRessource().put(new Ressource(TypeRessource.Or),1);
 			break;
 			
 		case Humain:
-			this.setEnMain(new Arme(TypeArme.EpéeCourte,this.getNiveau()));
 			this.getInventaireArme().add(new Arme(TypeArme.EpéeCourte,this.getNiveau()));
+			this.ChangerItem(new Arme(TypeArme.EpéeCourte,this.getNiveau()));
 			this.getInventaireRessource().put(new Ressource(TypeRessource.Bois),2);
 			this.getInventairePotion().add(new Potion(Effet.GainDeVie,this.getNiveau()));
 			break;
 			
 		case Dragon:
-			this.setEnMain(new Arme(TypeArme.EpéeLongue,this.getNiveau()));
 			this.getInventaireArme().add(new Arme(TypeArme.EpéeLongue,this.getNiveau()));
+			this.ChangerItem(new Arme(TypeArme.EpéeLongue,this.getNiveau()));
 			this.getInventairePotion().add(new Potion(Effet.GainDegats,this.getNiveau()));
 			this.getInventaireRessource().put(new Ressource(TypeRessource.Or),2);
 			
 			break;
 			
 		case Nain:
-			this.setEnMain(new Arme(TypeArme.Arc,this.getNiveau()));
 			this.getInventaireArme().add(new Arme(TypeArme.Arc,this.getNiveau()));
+			this.ChangerItem(new Arme(TypeArme.Arc,this.getNiveau()));
 			this.getInventairePotion().add(new Potion(Effet.Etourdissement,this.getNiveau()));
 			this.getInventaireRessource().put(new Ressource(TypeRessource.Fer),2);
 			
@@ -54,28 +65,35 @@ public class Ennemi extends Entité {
 		}
 	}
 	
-	public void Jeter() {
+	public List<Objet> Jeter() {
+		List<Objet> Liste = new ArrayList<>();
 		for (int i = 0; i < this.getInventaireArme().size(); i++) {
 			if (this.getInventaireArme().get(i).getType()!=TypeArme.Main) {
 				this.getInventaireArme().get(i).setRamassé(false);
-				//AJOUTER A LA CASE
+				this.getInventaireArme().get(i).Reparer(this);
+				Liste.add(this.getInventaireArme().get(i));
+				this.getInventaireArme().remove(i);
 			}
 		}
 		for (int i = 0; i < this.getInventairePotion().size(); i++) {
 			this.getInventairePotion().get(i).setRamassé(false);
-			//AJOUTER A LA CASE
+			Liste.add(this.getInventairePotion().get(i));
+			this.getInventairePotion().remove(i);
 		}
 		for(Entry<Ressource, Integer> entry : this.getInventaireRessource().entrySet()) {
 			Ressource cle = entry.getKey();
 			Integer valeur = entry.getValue();
-			/*while (valeur>0) {
-				this.getInventaireRessource().put(cle,this.getInventaireRessource().get(cle)-1);
+			if (valeur >0) {
 				cle.setRamassé(false);
-				// AJOUTER A LA CASE
-				
-			}*/
+				while (valeur>0) {
+					Liste.add(cle);
+					this.getInventaireRessource().put(cle,this.getInventaireRessource().get(cle)-1);
+					valeur=valeur-1;
+				}
+			}
 			
 		}
+		return Liste;
 	}
 	
 	public Categorie getCategorie() {

@@ -11,14 +11,16 @@ import Jeu.Item;
 import Jeu.Potion;
 import Jeu.TypeArme;
 import affichage.AffichageBarreInventaire;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.FlowPane;
+/**
+ * @date 23/05/2020
+ * @author Corentin BRILLANT
+ */
 
-public class ControleInventaireItemsEntite extends FlowPane implements EventHandler<KeyEvent>,Observer{
+
+public class ControleInventaireItemsEntite extends FlowPane implements Observer{
 
 	
 	AffichageBarreInventaire barre;
@@ -39,7 +41,7 @@ public class ControleInventaireItemsEntite extends FlowPane implements EventHand
 		this.barre.getCaseArmeEnMain().setOnMouseClicked((e)->{this.entite.ChangerItem(new Arme(TypeArme.Main,1));});
 		this.getChildren().add(barre);
 		this.setAlignment(Pos.BOTTOM_RIGHT);
-		FlowPane.setMargin(barre, new Insets(0, 150, 10, 0));
+		FlowPane.setMargin(barre, new Insets(0, 10, 10, 0));
 	}
 	@Override
 	public void update(Observable arg0, Object arg1) {
@@ -49,6 +51,7 @@ public class ControleInventaireItemsEntite extends FlowPane implements EventHand
 		}
 	}
 	
+	/**{@literal met à jour l'affichage de l'inventaire en fonction de l'inventaire du joueur}*/
 	public void majBarre() {
 		this.barre.videCases();
 		Item enMain = this.entite.getEnMain();
@@ -126,12 +129,5 @@ public class ControleInventaireItemsEntite extends FlowPane implements EventHand
 			}
 		}
 		
-	}
-	@Override
-	public void handle(KeyEvent event) {
-		// TODO Auto-generated method stub
-		if (event.getCode().equals(KeyCode.TAB)) {
-			
-		}
 	}
 }

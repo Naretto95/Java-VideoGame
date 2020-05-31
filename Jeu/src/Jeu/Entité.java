@@ -1,14 +1,20 @@
 package Jeu;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Random;
-
-public class Entité extends Observable{
+/**
+ * 
+ * @author Lilian Naretto
+ *
+ */
+public class Entité extends Observable implements Serializable {
 	
+	private static final long serialVersionUID = 1L;
 	public static Integer VIE_MODIFIEE = new Integer(0);
 	public static Integer EST_MORT = new Integer(1);
 	public static Integer RESSOURCES_MODIFIEES = new Integer(2);
@@ -18,6 +24,7 @@ public class Entité extends Observable{
 	private int PositionX;
 	private int PositionY;
 	private int Niveau;
+	private int Etourdissement;
 	private Item enMain;
 	private EtatEntité Etat;
 	private List<Arme> InventaireArme;
@@ -31,11 +38,12 @@ public class Entité extends Observable{
 		this.setInventaireArme(_InventaireArme);
 		this.setInventairePotion(_InventairePotion);
 		this.setEtat(EtatEntité.Vivant);
+		this.setEtourdissement(0);
 		this.setNiveau(_Niveau);
 		this.setInventaireRessource(_InventaireRessource);
 		this.setPositionX(_PositionX);
 		this.setPositionY(PositionY);
-		this.setVie(3);
+		this.setVie(_Niveau*100);
 		this.getInventaireArme().add(new Arme(TypeArme.Main,this.getNiveau()));
 		this.getInventaireRessource().put(new Ressource(TypeRessource.Cle),0);
 		this.getInventaireRessource().put(new Ressource(TypeRessource.Bois),0);
@@ -58,10 +66,10 @@ public class Entité extends Observable{
 				if (rater==false) {
 					boolean etourdis = new Random().nextInt(5)==0;
 					if (Math.abs(_Entité.getPositionX()-this.getPositionX())<= _Arme.getPortée() && _Entité.getPositionY()==this.getPositionY() || Math.abs(_Entité.getPositionY()-this.getPositionY())<= _Arme.getPortée() && _Entité.getPositionX()==this.getPositionX() ) {
-						_Entité.DegatsReçues(_Arme);
 						if (etourdis==true) {
 							_Entité.setEtat(EtatEntité.Etourdis);
-						}
+						}_Entité.DegatsReçues(_Arme);
+						
 						_Arme.setDurabilité(_Arme.getDurabilité()-1);
 						if (_Arme.getDurabilité()<=0) {
 							_Arme.setEtat(false);
@@ -130,6 +138,14 @@ public class Entité extends Observable{
 					}
 				}
 			}
+		}else {
+			if (this.getEtat()==EtatEntité.Etourdis) {
+				this.setEtourdissement(this.getEtourdissement()+1);
+				if (this.getEtourdissement()==5) {
+					this.setEtourdissement(0);
+					this.setEtat(EtatEntité.Vivant);
+				}
+			}
 		}
 		this.setChanged();
 		this.notifyObservers(CHANGEMENT_ITEM);
@@ -178,7 +194,7 @@ public class Entité extends Observable{
 		}
 	}
 	
-	public void Utiliser(Entité _Entité) {
+	public void Utiliser(Entité _Entité){
 		if (this.getEtat()==EtatEntité.Vivant) {
 			if (this.enMain instanceof Arme) {
 				if (_Entité.getEtat()==EtatEntité.Vivant || _Entité.getEtat()==EtatEntité.Etourdis) {
@@ -187,8 +203,6 @@ public class Entité extends Observable{
 						if (_Entité.getEtat()==EtatEntité.Mort) {
 							((Joueur)this).setExperience(((Joueur)this).getExperience()+((Ennemi)_Entité).getExperienceMonstre());
 							((Joueur)this).levelup();
-							((Ennemi)_Entité).Jeter();
-							_Entité=null;
 						}
 					}
 				}
@@ -228,8 +242,15 @@ public class Entité extends Observable{
 						break;
 						
 					case GainDegats :
-
-						// A remplir
+						for (int i = 0; i < this.getInventaireArme().size(); i++) {
+							if (this.getInventaireArme().get(i).getType()!=TypeArme.Main && this.getInventaireArme().get(i).isDegatsUp()==false) {
+								this.getInventaireArme().get(i).setDegatsUp(true);
+								this.getInventaireArme().get(i).setDegats(this.getInventaireArme().get(i).getDegats()+((Potion)this.enMain).getNiveau());
+								((Potion)this.enMain).setEtat(false);
+								this.ActualiserInventaire();
+								break;
+							}
+						}
 						break;
 						
 					default:
@@ -237,7 +258,18 @@ public class Entité extends Observable{
 					}
 				}
 			}
+		}else {
+			if (this.getEtat()==EtatEntité.Etourdis) {
+				this.setEtourdissement(this.getEtourdissement()+1);
+				if (this.getEtourdissement()==5) {
+					this.setEtourdissement(0);
+					this.setEtat(EtatEntité.Vivant);
+				}
+			}
 		}
+		this.ActualiserInventaire();
+		this.setChanged();
+		this.notifyObservers(CHANGEMENT_ITEM);
 	}
 	
 	public void Empoisonner(Entité _Entité) {
@@ -346,6 +378,14 @@ public class Entité extends Observable{
 
 	public void setInventairePotion(List<Potion> inventairePotion) {
 		InventairePotion = inventairePotion;
+	}
+
+	public int getEtourdissement() {
+		return Etourdissement;
+	}
+
+	public void setEtourdissement(int etourdissement) {
+		Etourdissement = etourdissement;
 	}
 	
 	

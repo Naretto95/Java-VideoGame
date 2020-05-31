@@ -6,6 +6,11 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+/**
+ * @date 23/05/2020
+ * @author Corentin BRILLANT
+ */
+
 
 public class AffichageBarreInventaire extends GridPane{
 	

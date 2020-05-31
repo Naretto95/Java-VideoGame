@@ -1,13 +1,22 @@
 
 package Jeu;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Stack;
-
-public class Case implements Observer{
+/**
+ * 
+ * @author Corentin BRILLANT
+ *
+ */
+public class Case implements Observer,Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	public static Integer VIDE = new Integer(0);
 	public static Integer OBSTACLE = new Integer(1);
 	public static Integer PORTE = new Integer(2);
@@ -90,6 +99,10 @@ public class Case implements Observer{
 	public Object getContenu() {
 		return contenu;
 	}
+	
+	public boolean hasStaff() {
+		return (!this.items.isEmpty())||(!this.ressources.isEmpty());
+	}
 
 	public void setContenu(Object contenu) {
 		if (this.getContenu() instanceof Entité) {
@@ -102,6 +115,17 @@ public class Case implements Observer{
 		}
 		this.contenu = contenu;
 	}
+	
+	public void addSomeObjets(List<Objet> liste) {
+		for (int i =0;i<liste.size();i++) {
+			if (liste.get(i) instanceof Ressource) {
+				this.addRessource((Ressource) liste.get(i));
+			}
+			else if(liste.get(i) instanceof Item) {
+				this.addItem((Item) liste.get(i));
+			}
+		}
+	}
 
 
 	@Override
@@ -110,14 +134,9 @@ public class Case implements Observer{
 		if (arg.equals(Entité.EST_MORT)) {
 			if (o instanceof Entité && this.getContenu() instanceof Entité && ((Entité) this.getContenu()).equals((Entité) o)) {
 				Entité entiteMorte = (Entité) o;
-				List<Arme> armes = entiteMorte.getInventaireArme();
-				while (armes.size()>0) {
-					this.addItem(armes.remove(armes.size()-1));
-				}
-				List<Potion> potions = entiteMorte.getInventairePotion();
-				while (potions.size()>0) {
-					this.addItem(potions.remove(potions.size()-1));
-				}
+				List<Objet> liste = ((Ennemi)entiteMorte).Jeter();
+				this.addSomeObjets(liste);
+				this.setContenu(Case.VIDE);
 				o.deleteObserver(this);
 			}else {
 				System.out.println("Il y a un problème avec le dépot de l'inventaire de ce défunt");
