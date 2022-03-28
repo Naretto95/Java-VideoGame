@@ -51,7 +51,7 @@ public class ControleExpBarre  extends Group implements Observer{
 		if (arg1 instanceof Integer && arg1.equals(Joueur.GAIN_EXP)) {
 			this.life.setWidth((double)((double)joueur.getExperience()/((double)joueur.getNiveau()*100))*largeurBarre-10);
 			this.niveau.setText(this.joueur.getNiveau()+"");
-			System.out.println("j'ai gagné en expériece"+joueur.getExperience()+"sur"+joueur.getNiveau()*100);
+			System.out.println("j'ai gagnÃ© en expÃ©rience : "+joueur.getExperience()+" sur "+joueur.getNiveau()*100);
 		}
 	}
 }
