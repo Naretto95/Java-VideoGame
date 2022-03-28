@@ -155,8 +155,6 @@ public class MenuApp extends Application {
             menuBox2.addItems(
                     new MenuItem("Recuperer et jeter des Items", 400),
                     new MenuItem("Changer d'Arme", 510),
-                    new MenuItem("blablabla", 510),
-                    new MenuItem("blablabla", 510));
         });
         menuBox.addItem(astuce);
 
@@ -170,7 +168,6 @@ public class MenuApp extends Application {
                     new MenuItem("Graphique", 400),
                     new MenuItem("Son", 510),
                     new MenuItem("Difficulté", 510),
-                    new MenuItem("blablabla", 510));
         });
 
 
