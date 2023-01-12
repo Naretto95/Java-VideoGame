@@ -4,7 +4,7 @@ This repository contains a Java-based video game project. The game features exci
 
 ## Getting Started
 
-To get started with the game, you will need to have Java 8 or later installed on your computer. Once you have Java installed, you can download the game files from this repository and run them using the command "java -jar [game_file.jar]"
+To get started with the game, you will need to have Java 8 or later installed on your computer. Once you have Java installed, you can download the game files from this repository and run them using the command `java -jar [game_file.jar]`
 
 ## Gameplay
 
